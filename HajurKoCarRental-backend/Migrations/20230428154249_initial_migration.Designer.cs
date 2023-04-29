@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HajurKoCarRental_backend.Migrations
 {
     [DbContext(typeof(AppDataContext))]
-    [Migration("20230428044354_Updated User Model")]
-    partial class UpdatedUserModel
+    [Migration("20230428154249_initial_migration")]
+    partial class initial_migration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -32,6 +32,13 @@ namespace HajurKoCarRental_backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<int>("availability_status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("brand_name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("color")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -40,14 +47,14 @@ namespace HajurKoCarRental_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("model_number")
-                        .HasColumnType("int");
-
                     b.Property<byte[]>("photo")
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
-                    b.Property<int>("rental_amount")
+                    b.Property<int>("registration_number")
+                        .HasColumnType("int");
+
+                    b.Property<int>("rental_cost")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -63,20 +70,66 @@ namespace HajurKoCarRental_backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("amount")
+                    b.Property<int>("carsId")
                         .HasColumnType("int");
 
-                    b.Property<string>("damaged_parts")
+                    b.Property<string>("damage_description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("repair_cost")
+                        .HasColumnType("int");
 
                     b.Property<string>("settlement_status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("usersId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("carsId");
+
+                    b.HasIndex("usersId");
+
                     b.ToTable("DamagedCars");
+                });
+
+            modelBuilder.Entity("HajurKoCarRental_backend.Model.RentalHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("authorized_by")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("carsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("rental_charge")
+                        .HasColumnType("int");
+
+                    b.Property<int>("rental_duration")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("requested_date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("userId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("carsId");
+
+                    b.HasIndex("userId");
+
+                    b.ToTable("RentalHistory");
                 });
 
             modelBuilder.Entity("HajurKoCarRental_backend.Model.RentalModel", b =>
@@ -103,25 +156,28 @@ namespace HajurKoCarRental_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("userid")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("userId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("carsId");
 
-                    b.HasIndex("userid");
+                    b.HasIndex("userId");
 
-                    b.ToTable("Rentals");
+                    b.ToTable("RentalRequest");
                 });
 
             modelBuilder.Entity("HajurKoCarRental_backend.Model.UserModel", b =>
                 {
-                    b.Property<Guid>("id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("address")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("date_of_birth")
@@ -131,15 +187,19 @@ namespace HajurKoCarRental_backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("email_address")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("full_name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("password")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("phone_number")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("profile_picture")
@@ -149,9 +209,47 @@ namespace HajurKoCarRental_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("id");
+                    b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("HajurKoCarRental_backend.Model.DamagedCarsModel", b =>
+                {
+                    b.HasOne("HajurKoCarRental_backend.Model.CarsModel", "cars")
+                        .WithMany()
+                        .HasForeignKey("carsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HajurKoCarRental_backend.Model.UserModel", "users")
+                        .WithMany()
+                        .HasForeignKey("usersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("cars");
+
+                    b.Navigation("users");
+                });
+
+            modelBuilder.Entity("HajurKoCarRental_backend.Model.RentalHistory", b =>
+                {
+                    b.HasOne("HajurKoCarRental_backend.Model.CarsModel", "cars")
+                        .WithMany()
+                        .HasForeignKey("carsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HajurKoCarRental_backend.Model.UserModel", "user")
+                        .WithMany()
+                        .HasForeignKey("userId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("cars");
+
+                    b.Navigation("user");
                 });
 
             modelBuilder.Entity("HajurKoCarRental_backend.Model.RentalModel", b =>
@@ -164,7 +262,7 @@ namespace HajurKoCarRental_backend.Migrations
 
                     b.HasOne("HajurKoCarRental_backend.Model.UserModel", "user")
                         .WithMany()
-                        .HasForeignKey("userid")
+                        .HasForeignKey("userId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
