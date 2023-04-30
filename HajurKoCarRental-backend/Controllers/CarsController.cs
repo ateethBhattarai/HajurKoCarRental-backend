@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HajurKoCarRental_backend.DataContext;
 using HajurKoCarRental_backend.Model;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HajurKoCarRental_backend.Controllers
 {
-    [Route("api/[controller]")]
+    //[Authorize]
     [ApiController]
+    [Route("api/[controller]")]
     public class CarsController : ControllerBase
     {
         private readonly AppDataContext _context;
@@ -22,6 +24,7 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         // GET: api/Cars
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CarsModel>>> GetCars()
         {

@@ -8,24 +8,27 @@ using Microsoft.EntityFrameworkCore;
 using HajurKoCarRental_backend.DataContext;
 using HajurKoCarRental_backend.Model;
 using System.Reflection.Metadata.Ecma335;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HajurKoCarRental_backend.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RentalController : ControllerBase
     {
         private readonly AppDataContext _context;
 
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public RentalController(AppDataContext context, IHttpContextAccessor httpContextAccessor)
+        //private readonly IHttpContextAccessor _httpContextAccessor;
+        public RentalController(AppDataContext context, IWebHostEnvironment environment)
         {
             _context = context;
-            _httpContextAccessor = httpContextAccessor;
+            //_httpContextAccessor = httpContextAccessor;
         }
 
 
         // GET: api/Rental
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RentalModel>>> GetRentals()
         {
@@ -85,36 +88,37 @@ namespace HajurKoCarRental_backend.Controllers
             return NoContent();
         }
 
+       
+        //private async Task<RentalModel?> DiscountCheck(int id) //to check or validate the discount management
+        //{
+        //    UserModel? user = await _context.Users.Where(allUsers => allUsers.Id == id).FirstOrDefaultAsync();
+        //    if (user == null) return null;
+        //    RentalModel? rentData = await _context.Rentals.Where(allRental => allRental.Users.Id.ToString() == id.ToString()).FirstOrDefaultAsync() ?? throw new Exception("Error");
+
+        //    //for staff
+        //    if (user.role == Role.Staff)
+        //    {
+        //        rentData.available_discount = true;
+        //        rentData.rental_amount = rentData.Cars.rental_cost * 0.25;
+        //    }
+
+        //    //for customer
+        //    if (user.role == Role.Customer)
+        //    {
+        //        if (user.last_login <= DateTime.UtcNow)
+        //        {
+        //            rentData.available_discount = true;
+        //            rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
+        //        }
+        //    }
+
+        //    _context.Update(rentData);
+        //    await _context.SaveChangesAsync();
+        //    return rentData;
+        //}
+
         // POST: api/Rental
         [HttpPost]
-        private async Task<RentalModel?> DiscountCheck(int id) //to check or validate the discount management
-        {
-            UserModel? user = await _context.Users.Where(allUsers => allUsers.Id == id).FirstOrDefaultAsync();
-            if (user == null) return null;
-            RentalModel? rentData = await _context.Rentals.Where(allRental => allRental.Users.Id.ToString() == id.ToString()).FirstOrDefaultAsync() ?? throw new Exception("Error");
-
-            //for staff
-            if (user.role == Role.Staff)
-            {
-                rentData.available_discount = true;
-                rentData.rental_amount = rentData.Cars.rental_cost * 0.25;
-            }
-
-            //for customer
-            if (user.role == Role.Customer)
-            {
-                if (user.last_login <= DateTime.UtcNow)
-                {
-                    rentData.available_discount = true;
-                    rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
-                }
-            }
-
-            _context.Update(rentData);
-            await _context.SaveChangesAsync();
-            return rentData;
-        }
-
         public async Task<ActionResult<RentalModel>> PostRentalModel(RentalModel rentalModel)
         {
             if (_context.Rentals == null)
