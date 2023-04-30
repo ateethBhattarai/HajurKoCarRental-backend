@@ -19,8 +19,13 @@ namespace HajurKoCarRental_backend.Model
         public string phone_number { get; set; }
         public string email_address { get; set; }
         public string address { get; set; }
+        public DateTime last_login { get; set; } = DateTime.UtcNow;
         public string? profile_picture { get; set; }
         public string? document { get; set; }
         public Role role { get; set; }
+
+        //creating place for JWT Access Token
+        [NotMapped]
+        public string JwtToken { get; set; }
     }
 }

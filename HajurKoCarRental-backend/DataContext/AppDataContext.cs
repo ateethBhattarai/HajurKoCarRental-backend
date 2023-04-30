@@ -14,6 +14,8 @@ namespace HajurKoCarRental_backend.DataContext
         public DbSet<CarsModel> Cars { get; set; } = null!;
         public DbSet<RentalModel> Rentals { get; set; } = null!;
         public DbSet<DamagedCarsModel> DamagedCars { get; set; } = null!;
+        public DbSet<RentalHistory> RentalHistories { get; set; } = null!;
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -14,6 +14,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using HajurKoCarRental_backend.DTOs;
+using System.Security.Claims;
+using Microsoft.IdentityModel.JsonWebTokens;
+
 
 namespace HajurKoCarRental_backend.Controllers
 {
@@ -110,7 +114,7 @@ namespace HajurKoCarRental_backend.Controllers
 
             return CreatedAtAction("GetUserModel", new { id = userModel.Id }, userModel);
         }
-       
+
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
@@ -132,9 +136,9 @@ namespace HajurKoCarRental_backend.Controllers
             return NoContent();
         }
 
-        //for login purpose
+        //for login purposes
         //for checking the user credentials accuracy
-        private async Task<UserModel?> AuthenticateUser(UserModel users)
+        private async Task<UserModel?> AuthenticateUser(LoginDto users)
         {
             //for checking existing user
             UserModel? availableUser = await _context.Users.FirstOrDefaultAsync(mail => mail.email_address == users.email_address);
@@ -145,36 +149,41 @@ namespace HajurKoCarRental_backend.Controllers
             bool isPasswordMatched = BCrypt.Net.BCrypt.Verify(users.password, availableUser.password);
 
             if (!isPasswordMatched) return null;
+            await GenerateToken(users);
+            return availableUser;
 
-            return users;
+
 
         }
 
         //For managing JWT Token for login purposes
-        private string GenerateToken(Task<UserModel?> users)
+        private async Task<UserModel> GenerateToken(LoginDto users)
         {
             var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]));
             var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
+
             var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"], _configuration["Jwt:Audience"], null,
-                expires: DateTime.Now.AddMinutes(10),
+                _configuration["Jwt:Issuer"], 
+                _configuration["Jwt:Audience"], null,
+                expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: credentials
                 );
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            UserModel? approvedUser = await _context.Users.Where(mainUser => mainUser.email_address == users.email_address).FirstOrDefaultAsync();
+            approvedUser.JwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+            return approvedUser;
+
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login(UserModel users)
+        public async Task<UserModel> Login(LoginDto users)
         {
-            IActionResult response = Unauthorized();
-            var user_ = AuthenticateUser(users);
-            if (user_ != null)
+            UserModel? user_ = await AuthenticateUser(users);
+            if (user_ == null)
             {
-                var token = GenerateToken(user_);
-                response = Ok(new { token = token });
+                throw new Exception("No user Found!!");
             }
-            return response;
+            return user_;
         }
 
         private bool UserModelExists(int id)

@@ -12,11 +12,19 @@ namespace HajurKoCarRental_backend.Model
         [Key]
         public int Id { get; set; }
         public DateTime rental_date { get; set; }
-        public bool discount { get; set; }
-        public RentalStatus rental_status { get; set; }
-        public int rental_amount { get; set; }
-        public UserModel user { get; set; }
-        public CarsModel cars { get; set; }
+        public bool available_discount { get; set; } = false;
+        public double rental_amount { get; set; }
+        public RentalStatus rental_status { get; set; } = RentalStatus.pending;
+
+        [ForeignKey("Users")]
+        public int Users_id { get; set; }
+        public virtual UserModel? Users { get; set; }
+
+
+        [ForeignKey("Cars")]
+        public int Cars_id { get; set; }
+
+        public virtual CarsModel? Cars { get; set; }
 
     }
 }

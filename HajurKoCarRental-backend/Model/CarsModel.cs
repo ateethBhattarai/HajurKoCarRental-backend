@@ -15,9 +15,10 @@ namespace HajurKoCarRental_backend.Model
         public string color { get; set; }
         public int registration_number { get; set; }
         public string brand_name { get; set; }
-        public int rental_cost { get; set;}
+        public double rental_cost { get; set; }
         public AvailabilityStatus availability_status { get; set; }
-        public byte[] photo { get; set; }
+        public string? photo { get; set; }
+
 
     }
 }
