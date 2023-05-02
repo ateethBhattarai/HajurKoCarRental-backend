@@ -15,6 +15,9 @@ namespace HajurKoCarRental_backend.DataContext
         public DbSet<RentalModel> Rentals { get; set; } = null!;
         public DbSet<DamagedCarsModel> DamagedCars { get; set; } = null!;
         public DbSet<RentalHistory> RentalHistories { get; set; } = null!;
+        public DbSet<OffersModel> OffersModels { get; set; } = null!;
+        public DbSet<NotificationModel> NotificationModels { get; set; } = null!;
+
 
 
 
@@ -28,6 +31,9 @@ namespace HajurKoCarRental_backend.DataContext
 
 
         public DbSet<HajurKoCarRental_backend.Model.RentalHistory>? RentalHistory { get; set; }
+
+
+        public DbSet<HajurKoCarRental_backend.Model.OffersModel>? OffersModel { get; set; }
     }
 
 }
