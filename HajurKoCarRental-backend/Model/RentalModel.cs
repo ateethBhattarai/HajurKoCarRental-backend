@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HajurKoCarRental_backend.Model
@@ -11,9 +12,10 @@ namespace HajurKoCarRental_backend.Model
     {
         [Key]
         public int Id { get; set; }
-        public DateTime rental_date { get; set; }
         public bool available_discount { get; set; } = false;
         public double rental_amount { get; set; }
+        public DateTime start_date { get; set; }
+        public DateTime end_date { get; set; }
         public RentalStatus rental_status { get; set; } = RentalStatus.pending;
 
         [ForeignKey("Users")]

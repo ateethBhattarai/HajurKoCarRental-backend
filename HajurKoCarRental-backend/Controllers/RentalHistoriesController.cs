@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HajurKoCarRental_backend.DataContext;
 using HajurKoCarRental_backend.Model;
+using System.Security.Claims;
 
 namespace HajurKoCarRental_backend.Controllers
 {
@@ -15,20 +16,23 @@ namespace HajurKoCarRental_backend.Controllers
     public class RentalHistoriesController : ControllerBase
     {
         private readonly AppDataContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public RentalHistoriesController(AppDataContext context)
+
+        public RentalHistoriesController(AppDataContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // GET: api/RentalHistories
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RentalHistory>>> GetRentalHistory()
         {
-          if (_context.RentalHistory == null)
-          {
-              return NotFound();
-          }
+            if (_context.RentalHistory == null)
+            {
+                return NotFound();
+            }
             return await _context.RentalHistory.ToListAsync();
         }
 
@@ -36,10 +40,10 @@ namespace HajurKoCarRental_backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<RentalHistory>> GetRentalHistory(int id)
         {
-          if (_context.RentalHistory == null)
-          {
-              return NotFound();
-          }
+            if (_context.RentalHistory == null)
+            {
+                return NotFound();
+            }
             var rentalHistory = await _context.RentalHistory.FindAsync(id);
 
             if (rentalHistory == null)
@@ -81,15 +85,55 @@ namespace HajurKoCarRental_backend.Controllers
             return NoContent();
         }
 
+        private async Task<UserModel> GetUser()
+        {
+            var currentUser = _httpContextAccessor.HttpContext?.User;
+            if (currentUser == null) throw new Exception("No User Found!!");
+
+            var userEmail = currentUser?.FindFirstValue(ClaimTypes.Email);
+            UserModel? users = await _context.Users.Where(user => user.email_address == userEmail).FirstOrDefaultAsync();
+            if (users == null) throw new Exception("User Not Found!!");
+
+            return users;
+        }
+
+        [HttpGet("rentalData")]
+        //to check or validate the discount managements
+        public async Task<RentalHistory?> Discount(int id)
+        {
+            UserModel? user = await GetUser();
+            if (user == null) return null;
+            RentalHistory? rentHistoryData = await _context.RentalHistory.Where(allRental => allRental.Users.Id.ToString() == id.ToString()).FirstOrDefaultAsync() ?? throw new Exception("Error");
+
+            //for staff
+            if (user.Role == Role.Staff)
+            {
+                rentHistoryData.rental_charge = rentHistoryData.Cars.rental_cost * 0.25;
+            }
+
+            //for customer
+            if (user.Role == Role.Customer)
+            {
+                if (user.last_login <= DateTime.UtcNow)
+                {
+                    rentHistoryData.rental_charge = rentHistoryData.Cars.rental_cost * 0.1;
+                }
+            }
+
+            _context.Update(rentHistoryData);
+            await _context.SaveChangesAsync();
+            return rentHistoryData;
+        }
+
         // POST: api/RentalHistories
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<RentalHistory>> PostRentalHistory(RentalHistory rentalHistory)
         {
-          if (_context.RentalHistory == null)
-          {
-              return Problem("Entity set 'AppDataContext.RentalHistory'  is null.");
-          }
+            if (_context.RentalHistory == null)
+            {
+                return Problem("Entity set 'AppDataContext.RentalHistory'  is null.");
+            }
             _context.RentalHistory.Add(rentalHistory);
             await _context.SaveChangesAsync();
 

@@ -8,11 +8,18 @@ namespace HajurKoCarRental_backend.Model
     {
         [Key]
         public int Id { get; set; }
-        public UserModel user { get; set; }
-        public CarsModel cars { get; set; }
+        
         public DateTime requested_date { get; set; }
         public string authorized_by { get; set; }
         public int rental_duration { get; set; }
-        public int rental_charge { get; set; }
+        public double rental_charge { get; set; }
+        [ForeignKey("Users")]
+        public int Users_id { get; set; }
+        public virtual UserModel? Users { get; set; }
+
+        [ForeignKey("Cars")]
+        public int Cars_id { get; set; }
+
+        public virtual CarsModel? Cars { get; set; }
     }
 }

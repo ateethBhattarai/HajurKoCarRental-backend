@@ -9,6 +9,7 @@ using HajurKoCarRental_backend.DataContext;
 using HajurKoCarRental_backend.Model;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace HajurKoCarRental_backend.Controllers
 {
@@ -103,19 +104,22 @@ namespace HajurKoCarRental_backend.Controllers
             }
 
             //for customer
-            if (user.Role == Role.Customer)
-            {
-                if (user.last_login <= DateTime.UtcNow)
-                {
-                    rentData.available_discount = true;
-                    rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
-                }
-            }
+            //if (user.Role == Role.Customer)
+            //{
+            //    if (user.last_login <= DateTime.UtcNow)
+            //    {
+            //        rentData.available_discount = true;
+            //        rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
+            //    }
+            //}
 
+            
             _context.Update(rentData);
             await _context.SaveChangesAsync();
             return rentData;
         }
+
+       
 
         // POST: api/Rental
         [HttpPost]

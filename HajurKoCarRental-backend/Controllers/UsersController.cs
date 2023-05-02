@@ -30,16 +30,18 @@ namespace HajurKoCarRental_backend.Controllers
         private readonly AppDataContext _context;
         private IConfiguration _configuration;
         private readonly IWebHostEnvironment? _environment;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
 
-
-        public UsersController(AppDataContext context, IConfiguration configuration, IWebHostEnvironment environment)
+        public UsersController(AppDataContext context, IConfiguration configuration, IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _configuration = configuration;
             _environment = environment;
+            _httpContextAccessor = httpContextAccessor;
 
         }
+
 
         // GET: api/Users
         [HttpGet]
@@ -180,11 +182,6 @@ namespace HajurKoCarRental_backend.Controllers
         //private async Task<UserModel>
         public async Task<UserModel> PostUserModel([FromForm] RegisterDto registerDto)
         {
-            //if (_context.Users == null)
-            //{
-            //    return Problem("Entity set 'AppDataContext.Users'  is null.");
-            //}
-
             UserModel user = registerDto.ToRegister();
             user.password = HashedPassword(registerDto.password);
             await _context.Users.AddAsync(user);
@@ -193,8 +190,6 @@ namespace HajurKoCarRental_backend.Controllers
             user = await UploadDocument(user.Id, registerDto.document);
 
             return user;
-
-            //return CreatedAtAction("GetUserModel", new { id = registerDto.Id }, registerDto);
         }
 
 
@@ -279,17 +274,30 @@ namespace HajurKoCarRental_backend.Controllers
             return Ok(user);
         }
 
-        //[AllowAnonymous]
-        //[HttpPost("login")]
-        //public async Task<UserModel> Login(LoginDto users)
-        //{
-        //    UserModel? user_ = await AuthenticateUser(users);
-        //    if (user_ == null)
-        //    {
-        //        throw new Exception("No user Found!!");
-        //    }
-        //    return user_;
-        //}
+        private async Task<UserModel> GetUser()
+        {
+            var currentUser = _httpContextAccessor.HttpContext?.User;
+            if (currentUser == null) throw new Exception("No User Found!!");
+
+            var userEmail = currentUser?.FindFirstValue(ClaimTypes.Email);
+            UserModel? users = await _context.Users.Where(user => user.email_address == userEmail).FirstOrDefaultAsync();
+            if (users == null) throw new Exception("User Not Found!!");
+
+            return users;
+        }
+
+
+        [HttpPost("logout")]
+        private async Task<bool> Logout()
+        {
+            UserModel? user = await GetUser();
+            if (user == null) throw new Exception("User not found!!");
+
+            user.JwtToken = string.Empty;
+            _context.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
         private bool UserModelExists(int id)
         {
