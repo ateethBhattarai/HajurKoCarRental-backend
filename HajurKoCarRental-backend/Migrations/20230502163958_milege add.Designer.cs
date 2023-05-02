@@ -4,6 +4,7 @@ using HajurKoCarRental_backend.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HajurKoCarRental_backend.Migrations
 {
     [DbContext(typeof(AppDataContext))]
-    partial class AppDataContextModelSnapshot : ModelSnapshot
+    [Migration("20230502163958_milege add")]
+    partial class milegeadd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,7 +35,7 @@ namespace HajurKoCarRental_backend.Migrations
                     b.Property<int>("availability_status")
                         .HasColumnType("int");
 
-                    b.Property<string>("brand")
+                    b.Property<string>("brand_name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -48,7 +50,7 @@ namespace HajurKoCarRental_backend.Migrations
                     b.Property<double>("mileage")
                         .HasColumnType("float");
 
-                    b.Property<string>("model")
+                    b.Property<string>("model_name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
