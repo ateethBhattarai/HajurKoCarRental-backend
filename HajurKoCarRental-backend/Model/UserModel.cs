@@ -22,7 +22,8 @@ namespace HajurKoCarRental_backend.Model
         public DateTime last_login { get; set; } = DateTime.UtcNow;
         public string? profile_picture { get; set; }
         public string? document { get; set; }
-        public Role role { get; set; }
+
+        public Role Role { get; set; }
 
         //creating place for JWT Access Token
         [NotMapped]

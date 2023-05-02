@@ -24,7 +24,8 @@ namespace HajurKoCarRental_backend.Extensions
                 address = model.address,
                 date_of_birth = model.date_of_birth,
                 phone_number = model.phone_number,
-                password = model.password
+                password = model.password,
+                Role = model.role
             };
         }
     }

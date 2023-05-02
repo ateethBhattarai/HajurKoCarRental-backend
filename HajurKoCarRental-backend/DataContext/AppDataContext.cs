@@ -20,7 +20,7 @@ namespace HajurKoCarRental_backend.DataContext
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<UserModel>().Property(r => r.role).HasConversion<string>();
+            modelBuilder.Entity<UserModel>().Property(r => r.Role).HasConversion<string>();
             modelBuilder.Entity<DamagedCarsModel>().Property(s => s.settlement_status).HasConversion<string>();
             modelBuilder.Entity<RentalModel>().Property(rc => rc.rental_status).HasConversion<string>();
 

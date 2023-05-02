@@ -13,6 +13,9 @@ namespace HajurKoCarRental_backend.DTOs
         public string address { get; set; }
         public IFormFile? profile_picture { get; set; }
         public IFormFile? document { get; set; }
-        public Role role { get; set; }
+
+        [EnumDataType(typeof(Role), ErrorMessage = "Invalid Role")]
+
+        public Role role { get; set; } = Role.Customer;
     }
 }

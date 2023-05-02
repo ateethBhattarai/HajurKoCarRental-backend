@@ -97,7 +97,6 @@ namespace HajurKoCarRental_backend.Controllers
                     throw;
                 }
             }
-
             return NoContent();
         }
 
@@ -232,39 +231,65 @@ namespace HajurKoCarRental_backend.Controllers
             bool isPasswordMatched = BCrypt.Net.BCrypt.Verify(users.password, availableUser.password);
 
             if (!isPasswordMatched) return null;
-            await GenerateToken(users);
+
+            var userRole = availableUser.Role.ToString();
+
+            var token = await GenerateToken(users, userRole);
+
+            availableUser.JwtToken = token;
+
             return availableUser;
         }
 
         //For managing JWT Token for login purposes
-        private async Task<UserModel> GenerateToken(LoginDto users)
+        private async Task<string> GenerateToken(LoginDto users, string userRole)
         {
             var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]));
             var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
 
+            var claims = new List<Claim>
+            {
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, users.email_address),
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, users.email_address),
+                new Claim(ClaimTypes.Role, userRole)
+            };
+
             var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"], 
-                _configuration["Jwt:Audience"], null,
+                _configuration["Jwt:Issuer"],
+                _configuration["Jwt:Audience"],
+                claims,
                 expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: credentials
-                );
-            UserModel? approvedUser = await _context.Users.Where(mainUser => mainUser.email_address == users.email_address).FirstOrDefaultAsync();
-            approvedUser.JwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-            return approvedUser;
+            );
 
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<UserModel> Login(LoginDto users)
+        public async Task<ActionResult<UserModel>> Login(LoginDto users)
         {
-            UserModel? user_ = await AuthenticateUser(users);
-            if (user_ == null)
+            UserModel? user = await AuthenticateUser(users);
+
+            if (user == null)
             {
-                throw new Exception("No user Found!!");
+                throw new Exception("Invalid email or password");
             }
-            return user_;
+
+            return Ok(user);
         }
+
+        //[AllowAnonymous]
+        //[HttpPost("login")]
+        //public async Task<UserModel> Login(LoginDto users)
+        //{
+        //    UserModel? user_ = await AuthenticateUser(users);
+        //    if (user_ == null)
+        //    {
+        //        throw new Exception("No user Found!!");
+        //    }
+        //    return user_;
+        //}
 
         private bool UserModelExists(int id)
         {

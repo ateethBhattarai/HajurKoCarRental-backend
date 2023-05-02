@@ -23,8 +23,8 @@ namespace HajurKoCarRental_backend.Controllers
             _context = context;
         }
 
+        [AllowAnonymous]
         // GET: api/Cars
-        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CarsModel>>> GetCars()
         {
@@ -36,6 +36,7 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         // GET: api/Cars/5
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<CarsModel>> GetCarsModel(int id)
         {
@@ -55,6 +56,7 @@ namespace HajurKoCarRental_backend.Controllers
 
         // PUT: api/Cars/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize(Roles = "Staff")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCarsModel(int id, CarsModel carsModel)
         {
@@ -86,6 +88,7 @@ namespace HajurKoCarRental_backend.Controllers
 
         // POST: api/Cars
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize(Roles = "Staff")]
         [HttpPost]
         public async Task<ActionResult<CarsModel>> PostCarsModel(CarsModel carsModel)
         {
@@ -100,6 +103,7 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         // DELETE: api/Cars/5
+        [Authorize(Roles = "Staff")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCarsModel(int id)
         {
