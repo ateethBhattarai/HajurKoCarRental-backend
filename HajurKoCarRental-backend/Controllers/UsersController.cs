@@ -30,15 +30,15 @@ namespace HajurKoCarRental_backend.Controllers
         private readonly AppDataContext _context;
         private IConfiguration _configuration;
         private readonly IWebHostEnvironment? _environment;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        //private readonly IHttpContextAccessor _httpContextAccessor;
 
 
-        public UsersController(AppDataContext context, IConfiguration configuration, IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor)
+        public UsersController(AppDataContext context, IConfiguration configuration, IWebHostEnvironment environment)
         {
             _context = context;
             _configuration = configuration;
             _environment = environment;
-            _httpContextAccessor = httpContextAccessor;
+            //_httpContextAccessor = httpContextAccessor;
 
         }
 
@@ -274,30 +274,30 @@ namespace HajurKoCarRental_backend.Controllers
             return Ok(user);
         }
 
-        private async Task<UserModel> GetUser()
-        {
-            var currentUser = _httpContextAccessor.HttpContext?.User;
-            if (currentUser == null) throw new Exception("No User Found!!");
+        //private async Task<UserModel> GetUser()
+        //{
+        //    var currentUser = _httpContextAccessor.HttpContext?.User;
+        //    if (currentUser == null) throw new Exception("No User Found!!");
 
-            var userEmail = currentUser?.FindFirstValue(ClaimTypes.Email);
-            UserModel? users = await _context.Users.Where(user => user.email_address == userEmail).FirstOrDefaultAsync();
-            if (users == null) throw new Exception("User Not Found!!");
+        //    var userEmail = currentUser?.FindFirstValue(ClaimTypes.Email);
+        //    UserModel? users = await _context.Users.Where(user => user.email_address == userEmail).FirstOrDefaultAsync();
+        //    if (users == null) throw new Exception("User Not Found!!");
 
-            return users;
-        }
+        //    return users;
+        //}
 
 
-        [HttpPost("logout")]
-        private async Task<bool> Logout()
-        {
-            UserModel? user = await GetUser();
-            if (user == null) throw new Exception("User not found!!");
+        //[HttpPost("logout")]
+        //private async Task<bool> Logout()
+        //{
+        //    UserModel? user = await GetUser();
+        //    if (user == null) throw new Exception("User not found!!");
 
-            user.JwtToken = string.Empty;
-            _context.Update(user);
-            await _context.SaveChangesAsync();
-            return true;
-        }
+        //    user.JwtToken = string.Empty;
+        //    _context.Update(user);
+        //    await _context.SaveChangesAsync();
+        //    return true;
+        //}
 
         private bool UserModelExists(int id)
         {

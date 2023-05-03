@@ -12,7 +12,7 @@ namespace HajurKoCarRental_backend.Model
     {
         [Key]
         public int Id { get; set; }
-        public bool available_discount { get; set; } = false;
+        //public double discount { get; set; }
         public double rental_amount { get; set; }
         public DateTime start_date { get; set; }
         public DateTime end_date { get; set; }
@@ -21,7 +21,6 @@ namespace HajurKoCarRental_backend.Model
         [ForeignKey("Users")]
         public int Users_id { get; set; }
         public virtual UserModel? Users { get; set; }
-
 
         [ForeignKey("Cars")]
         public int Cars_id { get; set; }

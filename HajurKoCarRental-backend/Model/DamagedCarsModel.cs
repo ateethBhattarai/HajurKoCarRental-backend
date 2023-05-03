@@ -14,8 +14,15 @@ namespace HajurKoCarRental_backend.Model
         public string damage_description { get; set; }
         public SettlementStatus settlement_status { get; set; }
         public int repair_cost { get; set; }
-        public UserModel users { get; set; }
-        public CarsModel cars { get; set; }
-       
+
+        [ForeignKey("Users")]
+        public int Users_id { get; set; }
+        public virtual UserModel? Users { get; set; }
+
+        [ForeignKey("Cars")]
+        public int Cars_id { get; set; }
+
+        public virtual CarsModel? Cars { get; set; }
+
     }
 }

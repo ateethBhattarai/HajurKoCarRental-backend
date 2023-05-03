@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using HajurKoCarRental_backend.DataContext;
 using HajurKoCarRental_backend.Model;
 using Microsoft.AspNetCore.Authorization;
+using HajurKoCarRental_backend.DTOs;
+using HajurKoCarRental_backend.Extensions;
 
 namespace HajurKoCarRental_backend.Controllers
 {
@@ -17,13 +19,16 @@ namespace HajurKoCarRental_backend.Controllers
     public class CarsController : ControllerBase
     {
         private readonly AppDataContext _context;
+        private readonly IWebHostEnvironment? _environment;
 
-        public CarsController(AppDataContext context)
+
+        public CarsController(AppDataContext context, IWebHostEnvironment? environment)
         {
             _context = context;
+            _environment = environment;
         }
 
-        [AllowAnonymous]
+        //[AllowAnonymous]
         // GET: api/Cars
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CarsModel>>> GetCars()
@@ -36,7 +41,7 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         // GET: api/Cars/5
-        [AllowAnonymous]
+        //[AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<CarsModel>> GetCarsModel(int id)
         {
@@ -54,9 +59,29 @@ namespace HajurKoCarRental_backend.Controllers
             return carsModel;
         }
 
+        //change the avilability of the car to true
+        [HttpPost("{id}/availability")]
+        public async Task<IActionResult> SetAvailability(int id, bool isAvailable)
+        {
+            var car = await _context.Cars.FindAsync(id);
+
+            if (car == null)
+            {
+                return NotFound();
+            }
+
+            car.availability_status = isAvailable ? AvailabilityStatus.available : AvailabilityStatus.unavailable;
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+
+
         // PUT: api/Cars/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Staff")]
+        //[Authorize(Roles = "Staff")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCarsModel(int id, CarsModel carsModel)
         {
@@ -88,7 +113,7 @@ namespace HajurKoCarRental_backend.Controllers
 
         // POST: api/Cars
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Staff")]
+        //[Authorize(Roles = "Staff")]
         [HttpPost]
         public async Task<ActionResult<CarsModel>> PostCarsModel(CarsModel carsModel)
         {
@@ -102,8 +127,41 @@ namespace HajurKoCarRental_backend.Controllers
             return CreatedAtAction("GetCarsModel", new { id = carsModel.Id }, carsModel);
         }
 
+        private async Task<CarsModel> Image(int id, IFormFile? image)
+        {
+            CarsModel? car = await _context.Cars.Where(cars => cars.Id == id).FirstOrDefaultAsync();
+            if (car == null) throw new Exception("Car not Found!!");
+            if (image == null) return car;
+            if (!Directory.Exists(_environment.WebRootPath + "\\Upload\\"))
+            {
+                Directory.CreateDirectory(_environment.WebRootPath + "\\Upload\\");
+            }
+            using (FileStream filestream = System.IO.File.Create(_environment.WebRootPath + "\\Upload\\" + image.FileName))
+            {
+                image.CopyTo(filestream);
+                filestream.Flush();
+            }
+            string imagePath = "\\Upload\\" + image.FileName;
+            car.photo = imagePath;
+            _context.Update(car);
+            await _context.SaveChangesAsync();
+            return car;
+        }
+
+        [HttpPost("registration")]
+        //private async Task<UserModel>
+        public async Task<CarsModel> PostUserModel([FromForm] CarRegisterDto carsRegisterDto)
+        {
+            CarsModel cars = carsRegisterDto.ToRegisterCars();
+            //user.password = HashedPassword(registerDto.password);
+            await _context.Cars.AddAsync(cars);
+            await _context.SaveChangesAsync();
+            cars = await Image(cars.Id, carsRegisterDto.photo);
+
+            return cars;
+        }
         // DELETE: api/Cars/5
-        [Authorize(Roles = "Staff")]
+        //[Authorize(Roles = "Staff")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCarsModel(int id)
         {

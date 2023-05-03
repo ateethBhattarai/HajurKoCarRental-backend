@@ -10,26 +10,28 @@ using HajurKoCarRental_backend.Model;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using HajurKoCarRental_backend.DTOs;
+using HajurKoCarRental_backend.Extensions;
 
 namespace HajurKoCarRental_backend.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RentalController : ControllerBase
     {
         private readonly AppDataContext _context;
 
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public RentalController(AppDataContext context, IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor)
+        //private readonly IHttpContextAccessor _httpContextAccessor;
+        public RentalController(AppDataContext context, IWebHostEnvironment environment)
         {
             _context = context;
-            _httpContextAccessor = httpContextAccessor;
+            //_httpContextAccessor = httpContextAccessor;
         }
 
 
         // GET: api/Rental
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RentalModel>>> GetRentals()
         {
@@ -48,6 +50,7 @@ namespace HajurKoCarRental_backend.Controllers
             {
                 return NotFound();
             }
+
             var rentalModel = await _context.Rentals.FindAsync(id);
 
             if (rentalModel == null)
@@ -57,6 +60,82 @@ namespace HajurKoCarRental_backend.Controllers
 
             return rentalModel;
         }
+
+        //to get the data of rental pending
+        [HttpGet("pending")]
+        public async Task<ActionResult<IEnumerable<RentalModel>>> GetPendingRentals()
+        {
+            if (_context.Rentals == null)
+            {
+                return NotFound();
+            }
+
+            return await _context.Rentals
+                .Include(r => r.Cars)
+                .Include(r => r.Users)
+                .Where(r => r.rental_status == RentalStatus.pending)
+                .ToListAsync() ?? throw new Exception("No pending rental data found!!");
+        }
+
+        [HttpGet("success")]
+        public async Task<ActionResult<IEnumerable<RentalModel>>> GetSuccessRentals()
+        {
+            var rentals = await _context.Rentals
+                .Include(r => r.Cars)
+                .Include(r => r.Users)
+                .Where(r => r.rental_status == RentalStatus.success)
+                .ToListAsync();
+
+            if (rentals == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(rentals);
+        }
+
+        //to change the rental status from pending to success
+        [HttpPut("{id}/success")]
+        public async Task<IActionResult> SetRentalSuccess(int id)
+        {
+            var rental = await _context.Rentals.FindAsync(id);
+
+            if (rental == null)
+            {
+                return NotFound();
+            }
+
+            if (rental.rental_status == RentalStatus.success)
+            {
+                return BadRequest("Rental is already marked as success.");
+            }
+
+            rental.rental_status = RentalStatus.success;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!RentalExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok();
+        }
+
+        private bool RentalExists(int id)
+        {
+            return _context.Rentals.Any(e => e.Id == id);
+        }
+
 
         // PUT: api/Rental/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -90,7 +169,7 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         //to check or validate the discount managements
-        private async Task<RentalModel?> DiscountCheck(int id) 
+        private async Task<RentalModel?> DiscountCheck(int id)
         {
             UserModel? user = await _context.Users.Where(allUsers => allUsers.Id == id).FirstOrDefaultAsync();
             if (user == null) return null;
@@ -99,43 +178,70 @@ namespace HajurKoCarRental_backend.Controllers
             //for staff
             if (user.Role == Role.Staff)
             {
-                rentData.available_discount = true;
+                //rentData.available_discount = true;
                 rentData.rental_amount = rentData.Cars.rental_cost * 0.25;
             }
 
             //for customer
-            //if (user.Role == Role.Customer)
-            //{
-            //    if (user.last_login <= DateTime.UtcNow)
-            //    {
-            //        rentData.available_discount = true;
-            //        rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
-            //    }
-            //}
+            if (user.Role == Role.Customer)
+            {
+                if (user.last_login <= DateTime.UtcNow)
+                {
+                    //rentData.available_discount = true;
+                    rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
+                }
+            }
 
-            
+
             _context.Update(rentData);
             await _context.SaveChangesAsync();
             return rentData;
         }
 
-       
+        //[HttpPost("booking")]
+        //public async Task<ActionResult<RentalModel>> PostRentalModel(CarBookingDto bookingModel)
+        //{
+        //    if (_context.Rentals == null)
+        //    {
+        //        return Problem("Entity set 'AppDataContext.Rentals'  is null.");
+        //    }
 
-        // POST: api/Rental
-        [HttpPost]
-        public async Task<ActionResult<RentalModel>> PostRentalModel(RentalModel rentalModel)
+        //    RentalModel? rental = bookingModel.ToBookCars();
+
+        //    CarsModel? car = await _context.Cars.Where(cars => cars.Id == bookingModel.Cars_id).FirstOrDefaultAsync() ?? throw new Exception("Car not found!!");
+        //    UserModel? user = await _context.Users.Where(users => users.Id == bookingModel.Users_id).FirstOrDefaultAsync() ?? throw new Exception("User not found!!");
+
+        //    await _context.Rentals.AddAsync(rental);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok(rental);
+        //}
+
+        [HttpPost("booking")]
+        public async Task<ActionResult<RentalModel>> PostRentalModel(CarBookingDto bookingModel)
         {
             if (_context.Rentals == null)
             {
-                return Problem("Entity set 'AppDataContext.Rentals'  is null.");
+                return Problem("Entity set 'AppDataContext.Rentals' is null.");
             }
 
-            //rentalModel.discount_percentage = UserData(rentalModel);
-            await _context.Rentals.AddAsync(rentalModel);
+            CarsModel? car = await _context.Cars
+    .Where(cars => cars.Id == bookingModel.Cars_id && cars.availability_status.Equals(AvailabilityStatus.available))
+    .FirstOrDefaultAsync() ?? throw new Exception("Car not available for rent.");
+
+
+            DamagedCarsModel? damagedCar = await _context.DamagedCars.Where(dc => dc.Cars_id == bookingModel.Cars_id && dc.settlement_status == SettlementStatus.success).FirstOrDefaultAsync() ?? throw new Exception("Car is not available for rent due to unsettled damage.");
+
+            UserModel? user = await _context.Users.Where(users => users.Id == bookingModel.Users_id).FirstOrDefaultAsync() ?? throw new Exception("User not found!!");
+
+            RentalModel? rental = bookingModel.ToBookCars();
+
+            await _context.Rentals.AddAsync(rental);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRentalModel", new { id = rentalModel.Id }, rentalModel);
+            return Ok(rental);
         }
+
 
         // DELETE: api/Rental/5
         [HttpDelete("{id}")]

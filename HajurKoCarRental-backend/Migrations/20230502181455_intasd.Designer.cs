@@ -4,6 +4,7 @@ using HajurKoCarRental_backend.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HajurKoCarRental_backend.Migrations
 {
     [DbContext(typeof(AppDataContext))]
-    partial class AppDataContextModelSnapshot : ModelSnapshot
+    [Migration("20230502181455_intasd")]
+    partial class intasd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,10 +79,7 @@ namespace HajurKoCarRental_backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Cars_id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Users_id")
+                    b.Property<int>("carsId")
                         .HasColumnType("int");
 
                     b.Property<string>("damage_description")
@@ -94,11 +93,14 @@ namespace HajurKoCarRental_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("usersId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Cars_id");
+                    b.HasIndex("carsId");
 
-                    b.HasIndex("Users_id");
+                    b.HasIndex("usersId");
 
                     b.ToTable("DamagedCars");
                 });
@@ -211,6 +213,9 @@ namespace HajurKoCarRental_backend.Migrations
                     b.Property<int>("Users_id")
                         .HasColumnType("int");
 
+                    b.Property<double>("discount")
+                        .HasColumnType("float");
+
                     b.Property<DateTime>("end_date")
                         .HasColumnType("datetime2");
 
@@ -284,21 +289,21 @@ namespace HajurKoCarRental_backend.Migrations
 
             modelBuilder.Entity("HajurKoCarRental_backend.Model.DamagedCarsModel", b =>
                 {
-                    b.HasOne("HajurKoCarRental_backend.Model.CarsModel", "Cars")
+                    b.HasOne("HajurKoCarRental_backend.Model.CarsModel", "cars")
                         .WithMany()
-                        .HasForeignKey("Cars_id")
+                        .HasForeignKey("carsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HajurKoCarRental_backend.Model.UserModel", "Users")
+                    b.HasOne("HajurKoCarRental_backend.Model.UserModel", "users")
                         .WithMany()
-                        .HasForeignKey("Users_id")
+                        .HasForeignKey("usersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Cars");
+                    b.Navigation("cars");
 
-                    b.Navigation("Users");
+                    b.Navigation("users");
                 });
 
             modelBuilder.Entity("HajurKoCarRental_backend.Model.NotificationModel", b =>
