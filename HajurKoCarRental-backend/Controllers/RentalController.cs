@@ -198,25 +198,6 @@ namespace HajurKoCarRental_backend.Controllers
             return rentData;
         }
 
-        //[HttpPost("booking")]
-        //public async Task<ActionResult<RentalModel>> PostRentalModel(CarBookingDto bookingModel)
-        //{
-        //    if (_context.Rentals == null)
-        //    {
-        //        return Problem("Entity set 'AppDataContext.Rentals'  is null.");
-        //    }
-
-        //    RentalModel? rental = bookingModel.ToBookCars();
-
-        //    CarsModel? car = await _context.Cars.Where(cars => cars.Id == bookingModel.Cars_id).FirstOrDefaultAsync() ?? throw new Exception("Car not found!!");
-        //    UserModel? user = await _context.Users.Where(users => users.Id == bookingModel.Users_id).FirstOrDefaultAsync() ?? throw new Exception("User not found!!");
-
-        //    await _context.Rentals.AddAsync(rental);
-        //    await _context.SaveChangesAsync();
-
-        //    return Ok(rental);
-        //}
-
         [HttpPost("booking")]
         public async Task<ActionResult<RentalModel>> PostRentalModel(CarBookingDto bookingModel)
         {

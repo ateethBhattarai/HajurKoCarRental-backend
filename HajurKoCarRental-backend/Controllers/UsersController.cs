@@ -179,9 +179,14 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         [HttpPost("registration")]
-        //private async Task<UserModel>
         public async Task<UserModel> PostUserModel([FromForm] RegisterDto registerDto)
         {
+            // check if email already exists
+            if (await _context.Users.AnyAsync(u => u.email_address == registerDto.email_address))
+            {
+                throw new Exception("Email address is already registered.");
+            }
+
             UserModel user = registerDto.ToRegister();
             user.password = HashedPassword(registerDto.password);
             await _context.Users.AddAsync(user);
@@ -191,6 +196,7 @@ namespace HajurKoCarRental_backend.Controllers
 
             return user;
         }
+
 
 
         // DELETE: api/Users/5
@@ -260,7 +266,7 @@ namespace HajurKoCarRental_backend.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        [AllowAnonymous]
+        //[AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<UserModel>> Login(LoginDto users)
         {
