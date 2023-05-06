@@ -33,7 +33,6 @@ namespace HajurKoCarRental_backend.Extensions
         {
             return new RentalModel
             {
-                rental_amount = model.rental_amount,
                 start_date = model.start_date,
                 end_date = model.end_date,
                 rental_status = model.rental_status,

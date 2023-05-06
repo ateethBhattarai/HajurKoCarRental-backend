@@ -6,7 +6,7 @@ namespace HajurKoCarRental_backend.DTOs
 {
     public class CarBookingDto
     {
-        public double discount { get; set; }
+        //public double discount { get; set; }
         public double rental_amount { get; set; }
         public DateTime start_date { get; set; } = DateTime.UtcNow;
         public DateTime end_date { get; set; }

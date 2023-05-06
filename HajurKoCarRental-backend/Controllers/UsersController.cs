@@ -54,6 +54,41 @@ namespace HajurKoCarRental_backend.Controllers
             return await _context.Users.ToListAsync();
         }
 
+        [HttpGet("inactive")]
+        public async Task<ActionResult<IEnumerable<UserModel>>> GetInActiveCustomers()
+        {
+            DateTime lastLoginThreshold = DateTime.Now.AddMonths(-3); // calculate the date threshold
+
+            var customers = await _context.Users
+                .Where(user => user.Role == Role.Customer && user.last_login < lastLoginThreshold)
+                .ToListAsync();
+
+            if (customers == null || customers.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return customers;
+        }
+
+        [HttpGet("active")]
+        public async Task<ActionResult<IEnumerable<UserModel>>> GetActiveCustomers()
+        {
+            DateTime lastLoginThreshold = DateTime.Now.AddMonths(-3); // calculate the date threshold
+
+            var customers = await _context.Users
+                .Where(user => user.Role == Role.Customer && user.last_login > lastLoginThreshold)
+                .ToListAsync();
+
+            if (customers == null || customers.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return customers;
+        }
+
+
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserModel>> GetUserModel(int id)
@@ -101,6 +136,8 @@ namespace HajurKoCarRental_backend.Controllers
             }
             return NoContent();
         }
+
+
 
         //for hashing the password
         private string HashedPassword(string password)

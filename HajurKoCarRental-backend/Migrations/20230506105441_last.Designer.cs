@@ -4,6 +4,7 @@ using HajurKoCarRental_backend.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HajurKoCarRental_backend.Migrations
 {
     [DbContext(typeof(AppDataContext))]
-    partial class AppDataContextModelSnapshot : ModelSnapshot
+    [Migration("20230506105441_last")]
+    partial class last
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -208,14 +210,10 @@ namespace HajurKoCarRental_backend.Migrations
                     b.Property<int>("Cars_id")
                         .HasColumnType("int");
 
-                    b.Property<int>("Users_id")
+                    b.Property<int>("RentalDays")
                         .HasColumnType("int");
 
-                    b.Property<string>("accepted_by")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("discount")
+                    b.Property<int>("Users_id")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("end_date")
@@ -270,7 +268,7 @@ namespace HajurKoCarRental_backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("last_login")
+                    b.Property<DateTime>("last_login")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("password")

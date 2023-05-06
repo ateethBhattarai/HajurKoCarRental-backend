@@ -96,7 +96,7 @@ namespace HajurKoCarRental_backend.Controllers
 
         //to change the rental status from pending to success
         [HttpPut("{id}/success")]
-        public async Task<IActionResult> SetRentalSuccess(int id)
+        public async Task<IActionResult> SetRentalSuccess(int id, string acceptedBy)
         {
             var rental = await _context.Rentals.FindAsync(id);
 
@@ -109,8 +109,47 @@ namespace HajurKoCarRental_backend.Controllers
             {
                 return BadRequest("Rental is already marked as success.");
             }
-
+            
             rental.rental_status = RentalStatus.success;
+            rental.accepted_by = acceptedBy;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!RentalExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok();
+        }
+
+        //to change the rental status from pending to cancel
+        [HttpPut("{id}/cancel")]
+        public async Task<IActionResult> SetRentalCancel(int id)
+        {
+            var rental = await _context.Rentals.FindAsync(id);
+
+            if (rental == null)
+            {
+                return NotFound();
+            }
+
+            if (rental.rental_status == RentalStatus.cancelled)
+            {
+                return BadRequest("Rental is already cancelled.");
+            }
+
+            rental.rental_status = RentalStatus.cancelled;
+            rental.accepted_by = "Not Accepted. Rental Cancelled.";
 
             try
             {
@@ -169,34 +208,34 @@ namespace HajurKoCarRental_backend.Controllers
         }
 
         //to check or validate the discount managements
-        private async Task<RentalModel?> DiscountCheck(int id)
-        {
-            UserModel? user = await _context.Users.Where(allUsers => allUsers.Id == id).FirstOrDefaultAsync();
-            if (user == null) return null;
-            RentalModel? rentData = await _context.Rentals.Where(allRental => allRental.Users.Id.ToString() == id.ToString()).FirstOrDefaultAsync() ?? throw new Exception("Error");
+        //private async Task<RentalModel?> DiscountCheck(int id)
+        //{
+        //    UserModel? user = await _context.Users.Where(allUsers => allUsers.Id == id).FirstOrDefaultAsync();
+        //    if (user == null) return null;
+        //    RentalModel? rentData = await _context.Rentals.Where(allRental => allRental.Users.Id.ToString() == id.ToString()).FirstOrDefaultAsync() ?? throw new Exception("Error");
 
-            //for staff
-            if (user.Role == Role.Staff)
-            {
-                //rentData.available_discount = true;
-                rentData.rental_amount = rentData.Cars.rental_cost * 0.25;
-            }
+        //    //for staff
+        //    if (user.Role == Role.Staff)
+        //    {
+        //        //rentData.available_discount = true;
+        //        rentData.rental_amount = rentData.Cars.rental_cost * 0.25;
+        //    }
 
-            //for customer
-            if (user.Role == Role.Customer)
-            {
-                if (user.last_login <= DateTime.UtcNow)
-                {
-                    //rentData.available_discount = true;
-                    rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
-                }
-            }
+        //    //for customer
+        //    if (user.Role == Role.Customer)
+        //    {
+        //        if (user.last_login <= DateTime.UtcNow)
+        //        {
+        //            //rentData.available_discount = true;
+        //            rentData.rental_amount = rentData.Cars.rental_cost * 0.10;
+        //        }
+        //    }
 
 
-            _context.Update(rentData);
-            await _context.SaveChangesAsync();
-            return rentData;
-        }
+        //    _context.Update(rentData);
+        //    await _context.SaveChangesAsync();
+        //    return rentData;
+        //}
 
         [HttpPost("booking")]
         public async Task<ActionResult<RentalModel>> PostRentalModel(CarBookingDto bookingModel)
@@ -206,22 +245,79 @@ namespace HajurKoCarRental_backend.Controllers
                 return Problem("Entity set 'AppDataContext.Rentals' is null.");
             }
 
+
             CarsModel? car = await _context.Cars
-    .Where(cars => cars.Id == bookingModel.Cars_id && cars.availability_status.Equals(AvailabilityStatus.available))
-    .FirstOrDefaultAsync() ?? throw new Exception("Car not available for rent.");
+                .Where(cars => cars.Id == bookingModel.Cars_id && cars.availability_status.Equals(AvailabilityStatus.available))
+                .FirstOrDefaultAsync() ?? throw new Exception("Car not available for rent.");
 
+            // Check if the car is damaged
+            DamagedCarsModel? damagedCar = await _context.DamagedCars
+                .Where(dc => dc.Cars_id == bookingModel.Cars_id && dc.settlement_status == SettlementStatus.success)
+                .FirstOrDefaultAsync();
 
-            DamagedCarsModel? damagedCar = await _context.DamagedCars.Where(dc => dc.Cars_id == bookingModel.Cars_id && dc.settlement_status == SettlementStatus.success).FirstOrDefaultAsync() ?? throw new Exception("Car is not available for rent due to unsettled damage.");
+            if (damagedCar?.Id != null)
+            {
+                throw new Exception("Car is not available for rent due to unsettled damage.");
+            }
+
+            // Set the availability_status of the car to "unavailable"
+            car.availability_status = AvailabilityStatus.unavailable;
 
             UserModel? user = await _context.Users.Where(users => users.Id == bookingModel.Users_id).FirstOrDefaultAsync() ?? throw new Exception("User not found!!");
 
-            RentalModel? rental = bookingModel.ToBookCars();
+            // Check if user's role is staff or customer and last_login is less than 3 months
+            DateTime threeMonthsAgo = DateTime.UtcNow.AddMonths(-3);
+            bool isEligibleForDiscount = user.last_login.HasValue && user.last_login.Value > threeMonthsAgo;
 
-            await _context.Rentals.AddAsync(rental);
-            await _context.SaveChangesAsync();
 
-            return Ok(rental);
+            if (isEligibleForDiscount)
+            {
+                double discountPercentage = 0;
+
+                // Determine the discount percentage based on the user's role
+                if (user.Role.Equals(Role.Customer))
+                {
+                    discountPercentage = 0.1; // 10% discount
+                }
+                else if (user.Role.Equals(Role.Staff))
+                {
+                    discountPercentage = 0.2; // 20% discount
+                    //rental.discount = Discount.available; // Set discount status to "available"
+                }
+
+                // Calculate the discounted rental cost
+                double rentalCost = ((bookingModel.end_date - bookingModel.start_date).Days+1) * car.rental_cost;
+                double discountAmount = rentalCost * discountPercentage;
+                double discountedRentalCost = rentalCost - discountAmount;
+
+                // Update the rental amount in the rental model
+                RentalModel? rental = bookingModel.ToBookCars();
+                rental.discount = Discount.available; // Set discount status to "available"
+                rental.rental_status = RentalStatus.pending;
+                rental.rental_amount = discountedRentalCost;
+
+                await _context.Rentals.AddAsync(rental);
+                await _context.SaveChangesAsync();
+
+                return Ok(rental);
+            }
+            else
+            {
+                // Calculate the rental cost
+                double rentalCost = ((bookingModel.end_date - bookingModel.start_date).Days+1) * car.rental_cost;
+
+                // Update the rental amount in the rental model
+                RentalModel? rental = bookingModel.ToBookCars();
+                rental.rental_status = RentalStatus.pending;
+                rental.rental_amount = rentalCost;
+
+                await _context.Rentals.AddAsync(rental);
+                await _context.SaveChangesAsync();
+
+                return Ok(rental);
+            }
         }
+
 
 
         // DELETE: api/Rental/5
